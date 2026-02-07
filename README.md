@@ -9,13 +9,16 @@ This project uses an ESP32 to connect to the internet, retrieve the current time
 #### Arduino Mega 2560
 Connect the ESP32 to Arduino Mega as follows:
 
-- **ESP32 TX** → **Arduino Mega RX1 (Pin 19)**
+- **ESP32 GPIO 17 (TX)** → **Arduino Mega RX1 (Pin 19)**
 - **ESP32 GND** → **Arduino Mega GND**
+- **Do NOT connect Mega TX1 (5V) to ESP32 GPIO 18 (RX)** unless you use a level shifter (3.3V ← 5V)
 
 ```
-ESP32 (TX)  ----->  Arduino Mega (RX1 / D19)
-ESP32 (GND) ----->  Arduino Mega (GND)
+ESP32 (GPIO 17)  ----->  Arduino Mega (RX1 / D19)
+ESP32 (GND)      ----->  Arduino Mega (GND)
 ```
+
+**Note:** The ESP32 uses UART1 on GPIO 17/18 to separate data from bootloader messages on UART0.
 
 #### Arduino Uno (SoftwareSerial)
 Connect the ESP32 to Arduino Uno as follows:
