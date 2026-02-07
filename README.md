@@ -1,18 +1,39 @@
-# ESP32 Internet Time to Arduino Mega
+# ESP32 Internet Time to Arduino Mega/Uno
 
-This project uses an ESP32 to connect to the internet, retrieve the current time from an NTP server, and send it via serial communication to an Arduino Mega board.
+This project uses an ESP32 to connect to the internet, retrieve the current time from an NTP server, and send it via serial communication to an Arduino Mega or Arduino Uno board.
 
 ## Hardware Setup
 
 ### Connections
+
+#### Arduino Mega 2560
 Connect the ESP32 to Arduino Mega as follows:
 
 - **ESP32 TX** → **Arduino Mega RX1 (Pin 19)**
 - **ESP32 GND** → **Arduino Mega GND**
 
+```
+ESP32 (TX)  ----->  Arduino Mega (RX1 / D19)
+ESP32 (GND) ----->  Arduino Mega (GND)
+```
+
+#### Arduino Uno (SoftwareSerial)
+Connect the ESP32 to Arduino Uno as follows:
+
+- **ESP32 GPIO 17 (TX)** → **Arduino Uno D2 (RX)**
+- **ESP32 GND** → **Arduino Uno GND**
+- **Do NOT connect Uno TX (5V) to ESP32 GPIO 18 (RX)** unless you use a level shifter (3.3V ← 5V)
+
+```
+ESP32 (GPIO 17)  ----->  Arduino Uno (D2 / RX)
+ESP32 (GND)      ----->  Arduino Uno (GND)
+```
+
+**Note:** The ESP32 uses UART1 on GPIO 17/18 to receive data on a separate hardware serial port from the bootloader, avoiding garbage output on startup.
+
 ### Required Hardware
 - ESP32 board (configured for Adafruit Feather ESP32-S3)
-- Arduino Mega 2560
+- Arduino Mega 2560 or Arduino Uno
 - USB cables for programming both boards
 - Jumper wires for serial connection
 
@@ -119,28 +140,37 @@ pio run --target upload
 pio device monitor
 ```
 
-### 4. Upload Arduino Mega Code
+### 4. Upload Arduino Receiver Code (Mega or Uno)
 
 1. Open `arduino_mega_receiver.ino` in Arduino IDE
-2. Select **Board: Arduino Mega 2560**
+2. Select **Board: Arduino Mega 2560** or **Board: Arduino Uno**
 3. Select the correct COM port
 4. Click **Upload**
+
+#### Switching Boards
+
+The sketch detects the board at compile time. To switch:
+
+1. Open `arduino_mega_receiver.ino` in Arduino IDE.
+2. Choose **Tools → Board** and select **Arduino Mega 2560** or **Arduino Uno**.
+3. Re-upload the sketch after changing the board.
 
 ## How It Works
 
 ### ESP32 (Transmitter)
 1. Connects to WiFi network
 2. Synchronizes time with NTP server (`pool.ntp.org`)
-3. Sends time data every second via Serial (115200 baud)
+3. Sends time data every second via Serial (9600 baud for Uno, 115200 for Mega)
 4. Sends two formats:
    - Human-readable: `YYYY-MM-DD HH:MM:SS`
    - Parseable: `TIME:year,month,day,hour,minute,second`
 
-### Arduino Mega (Receiver)
-1. Listens on Serial1 (RX1/TX1 - pins 19/18)
-2. Receives and parses time data from ESP32
-3. Displays time on Serial Monitor (USB)
-4. Stores current time in `currentTime` structure
+### Arduino Mega/Uno (Receiver)
+1. Mega listens on `Serial1` (RX1/TX1 - pins 19/18)
+2. Uno listens on `SoftwareSerial` (RX=D2, TX=D3)
+3. Receives and parses time data from ESP32
+4. Displays time on Serial Monitor (USB)
+5. Stores current time in `currentTime` structure
 
 ## Time Data Format
 
@@ -170,8 +200,10 @@ const unsigned long TIME_UPDATE_INTERVAL = 1000; // milliseconds
 ### Change Baud Rate
 
 Make sure both ESP32 and Arduino use the same baud rate:
-- ESP32: `Serial.begin(115200);`
-- Arduino: `Serial1.begin(115200);`
+- Uno: 9600 baud (uses SoftwareSerial, receives on D2)
+- Mega: 115200 baud (uses Serial1)
+
+The ESP32 transmits on UART1 (GPIO 17) at the configured baud rate.
 
 ## Troubleshooting
 
@@ -179,12 +211,17 @@ Make sure both ESP32 and Arduino use the same baud rate:
 - Verify WiFi credentials are correct
 - Check if your network is 2.4GHz (ESP32 doesn't support 5GHz)
 - Ensure WiFi network is in range
-
-### Arduino not receiving data
-- Check physical connections (TX→RX1, GND→GND)
-- Verify both boards use 115200 baud rate
+ESP32 GPIO 17→D2, GND→GND)
+- Verify both boards use the same baud rate (9600 on Uno, 115200 on Mega)
 - Make sure ESP32 is successfully connected to WiFi
-- Check Serial Monitor on Arduino (should use Serial1 for receiving)
+- On Uno, confirm SoftwareSerial receives on D2
+
+### Garbage data at startup on Arduino
+- If using an older version without UART1 separation, the ESP32 bootloader may send data on UART0 at 115200 baud
+- The current version uses UART1 (GPIO 17/18) for clean data separation; no garbage should appear
+- If garbage appears, verify GPIO 17 is correctly connected to Arduino D200 on Uno, 115200 on Mega)
+- Make sure ESP32 is successfully connected to WiFi
+- On Uno, confirm SoftwareSerial uses D2 for RX
 
 ### Time is incorrect
 - Verify the timezone string is correct for your location in `src/main.cpp`
@@ -209,7 +246,7 @@ Timezone: CET (UTC+1)
 TIME:2026,2,7,14,30,45
 ```
 
-### Arduino Mega Output
+### Arduino Output (Mega/Uno)
 ```
 Arduino Mega - Time Receiver
 ============================

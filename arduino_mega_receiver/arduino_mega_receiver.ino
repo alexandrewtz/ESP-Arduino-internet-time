@@ -1,14 +1,32 @@
 /*
- * Arduino Mega - Time Receiver from ESP32
+ * Arduino Mega / Uno - Time Receiver from ESP32
  * 
- * This sketch receives time data from ESP32 via Serial
- * Connect ESP32 TX to Arduino Mega RX1 (pin 19)
- * Connect ESP32 GND to Arduino Mega GND
+ * This sketch receives time data from ESP32 via Serial.
+ *
+ * Mega 2560 wiring:
+ *   ESP32 TX -> Mega RX1 (pin 19)
+ *   ESP32 GND -> Mega GND
+ *
+ * Uno wiring (SoftwareSerial):
+ *   ESP32 TX -> Uno D2 (RX)
+ *   ESP32 GND -> Uno GND
+ *   Do NOT connect Uno TX (5V) to ESP32 RX unless level shifted.
  * 
  * The ESP32 sends time in two formats:
  * 1. Human readable: "YYYY-MM-DD HH:MM:SS"
  * 2. Parseable: "TIME:year,month,day,hour,minute,second"
  */
+
+#if defined(ARDUINO_AVR_UNO)
+#include <SoftwareSerial.h>
+const int RX_PIN = 2;
+const int TX_PIN = 3;
+const long DATA_BAUD = 9600;
+SoftwareSerial dataSerial(RX_PIN, TX_PIN);
+#else
+const long DATA_BAUD = 9600;
+#define dataSerial Serial1
+#endif
 
 // Structure to store time data
 struct TimeData {
@@ -25,12 +43,12 @@ TimeData currentTime = {0, 0, 0, 0, 0, 0, false};
 
 void setup() {
   // Serial for debugging (USB connection)
-  Serial.begin(115200);
+  Serial.begin(DATA_BAUD);
   
-  // Serial1 for receiving from ESP32 (pins 18/19 on Mega)
-  Serial1.begin(115200);
+  // Data serial for receiving from ESP32
+  dataSerial.begin(DATA_BAUD);
   
-  Serial.println("Arduino Mega - Time Receiver");
+  Serial.println("Arduino - Time Receiver");
   Serial.println("============================");
   Serial.println("Waiting for time data from ESP32...");
 }
@@ -90,8 +108,8 @@ void parseTimeData(String data) {
 
 void loop() {
   // Check if data is available from ESP32
-  if (Serial1.available()) {
-    String incomingData = Serial1.readStringUntil('\n');
+  if (dataSerial.available()) {
+    String incomingData = dataSerial.readStringUntil('\n');
     incomingData.trim();
     
     if (incomingData.length() > 0) {
