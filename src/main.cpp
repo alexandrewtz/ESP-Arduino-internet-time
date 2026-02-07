@@ -24,7 +24,7 @@ const char* ntpServer = "pool.ntp.org";
 const char* timezone = "CET-1CEST,M3.5.0,M10.5.0/3";
 
 // Time update interval (in milliseconds)
-const unsigned long TIME_UPDATE_INTERVAL = 1000; // Send time every second
+const unsigned long TIME_UPDATE_INTERVAL = 15000; // Send time every 15 seconds
 unsigned long lastTimeUpdate = 0;
 
 const int LED_PIN = -1;
