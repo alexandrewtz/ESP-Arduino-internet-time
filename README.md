@@ -52,12 +52,42 @@ Connect the ESP32 to Arduino Mega as follows:
 
 ### 1. Configure WiFi Credentials
 
-Edit `src/main.cpp` and update your WiFi credentials:
+WiFi credentials are managed through environment variables for security. Do NOT commit credentials to Git.
 
-```cpp
-const char* ssid = "YOUR_WIFI_SSID";
-const char* password = "YOUR_WIFI_PASSWORD";
+**Option 1: Using `.env` file (Recommended)**
+
+1. Copy the example environment file:
+   ```bash
+   cp .env.example .env
+   ```
+
+2. Edit `.env` and add your WiFi credentials:
+   ```bash
+   WIFI_SSID=your_network_name
+   WIFI_PASSWORD=your_network_password
+   ```
+
+3. PlatformIO will automatically load these variables when building.
+
+**Option 2: Using system environment variables**
+
+Set environment variables in your shell:
+
+```bash
+export WIFI_SSID="your_network_name"
+export WIFI_PASSWORD="your_network_password"
+pio run --target upload
 ```
+
+**Option 3: Using PlatformIO CLI environment**
+
+Pass credentials directly via command line:
+
+```bash
+WIFI_SSID=your_network_name WIFI_PASSWORD=your_network_password pio run --target upload
+```
+
+⚠️ **Security Note:** The `.env` file is in `.gitignore` and will NOT be committed to Git. Do not commit credentials to version control.
 
 ### 2. Timezone Configuration
 

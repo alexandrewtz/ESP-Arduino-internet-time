@@ -2,9 +2,10 @@
 #include <WiFi.h>
 #include <time.h>
 
-// WiFi credentials - REPLACE WITH YOUR NETWORK CREDENTIALS
-const char* ssid = "YOUR_WIFI_SSID";
-const char* password = "YOUR_WIFI_PASSWORD";
+// WiFi credentials from environment variables (passed via build flags)
+// If not set, falls back to placeholder values
+const char* ssid = WIFI_SSID;
+const char* password = WIFI_PASSWORD;
 
 // NTP Server settings
 const char* ntpServer = "pool.ntp.org";
