@@ -110,14 +110,14 @@ void connectToWiFi() {
 }
 
 void initTime() {
-  // Configure timezone with automatic DST handling
-  // Must be set BEFORE configTime() for proper NTP sync
+  // Configure NTP with timezone string for CET/CEST with automatic DST
+  // The timezone string is in POSIX format
+  configTime(0, 0, ntpServer, NULL, NULL);
+  
+  // Set timezone environment variable for proper localtime conversion
   setenv("TZ", timezone, 1);
   tzset();
   
-  // Configure NTP with timezone string
-  // For CET/CEST: offset is 0, DST offset is 0, timezone string handles it
-  configTime(0, 0, ntpServer, NULL, NULL);
   Serial.println("Waiting for time synchronization...");
   
   time_t now;
@@ -146,17 +146,11 @@ void initTime() {
 }
 
 void sendTimeToArduino() {
-  time_t now = time(nullptr);
-  
-  // Manual timezone offset for CET/CEST
-  // CET is UTC+1 (3600 seconds), CEST is UTC+2 (7200 seconds)
-  // For February 8, 2026, we're in winter (CET, not CEST)
-  // CEST starts on last Sunday of March (2026-03-29)
-  int cet_offset = 3600;  // UTC+1 for CET
-  
   struct tm timeinfo;
-  time_t local_time = now + cet_offset;
-  localtime_r(&local_time, &timeinfo);
+  if (!getLocalTime(&timeinfo)) {
+    Serial.println("Failed to obtain local time");
+    return;
+  }
   
   // Format: YYYY-MM-DD HH:MM:SS
   char timeString[64];
