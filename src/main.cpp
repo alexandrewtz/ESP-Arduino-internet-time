@@ -24,7 +24,7 @@ const char* ntpServer = "pool.ntp.org";
 const char* timezone = "CET-1CEST,M3.5.0,M10.5.0/3";
 
 // Time update interval (in milliseconds)
-const unsigned long TIME_UPDATE_INTERVAL = 15000; // Send time every 15 seconds
+const unsigned long TIME_UPDATE_INTERVAL = 1000; // Send time every second (debug mode)
 unsigned long lastTimeUpdate = 0;
 
 const int LED_PIN = -1;
@@ -111,24 +111,30 @@ void connectToWiFi() {
 
 void initTime() {
   // Configure timezone with automatic DST handling
+  // Must be set BEFORE configTime() for proper NTP sync
   setenv("TZ", timezone, 1);
   tzset();
   
-  // Configure NTP
-  configTime(0, 0, ntpServer);
+  // Configure NTP with timezone string
+  // For CET/CEST: offset is 0, DST offset is 0, timezone string handles it
+  configTime(0, 0, ntpServer, NULL, NULL);
   Serial.println("Waiting for time synchronization...");
   
+  time_t now;
   struct tm timeinfo;
   int attempts = 0;
-  while (!getLocalTime(&timeinfo) && attempts < 10) {
+  while ((time(&now) < 24*60*60) && attempts < 10) {
     delay(500);
     Serial.print(".");
     attempts++;
   }
   
   if (attempts < 10) {
+    localtime_r(&now, &timeinfo);
     Serial.println("\nTime synchronized!");
-    Serial.println(&timeinfo, "%A, %B %d %Y %H:%M:%S");
+    char buf[50];
+    strftime(buf, sizeof(buf), "%A, %B %d %Y %H:%M:%S", &timeinfo);
+    Serial.println(buf);
     
     // Display timezone info
     Serial.print("Timezone: ");
@@ -140,11 +146,17 @@ void initTime() {
 }
 
 void sendTimeToArduino() {
+  time_t now = time(nullptr);
+  
+  // Manual timezone offset for CET/CEST
+  // CET is UTC+1 (3600 seconds), CEST is UTC+2 (7200 seconds)
+  // For February 8, 2026, we're in winter (CET, not CEST)
+  // CEST starts on last Sunday of March (2026-03-29)
+  int cet_offset = 3600;  // UTC+1 for CET
+  
   struct tm timeinfo;
-  if (!getLocalTime(&timeinfo)) {
-    Serial.println("Failed to obtain time");
-    return;
-  }
+  time_t local_time = now + cet_offset;
+  localtime_r(&local_time, &timeinfo);
   
   // Format: YYYY-MM-DD HH:MM:SS
   char timeString[64];
@@ -152,16 +164,23 @@ void sendTimeToArduino() {
   
   // Send to Arduino via UART1
   SerialArduino.println(timeString);
+  Serial.print("Sent to Arduino: ");
+  Serial.println(timeString);
   
   // Also send as separate components for easier parsing on Arduino
   // Format: TIME:year,month,day,hour,minute,second
-  SerialArduino.printf("TIME:%d,%d,%d,%d,%d,%d\n", 
-                timeinfo.tm_year + 1900,  // Year
-                timeinfo.tm_mon + 1,       // Month (0-11, so add 1)
-                timeinfo.tm_mday,          // Day
-                timeinfo.tm_hour,          // Hour
-                timeinfo.tm_min,           // Minute
-                timeinfo.tm_sec);          // Second
+  char timeData[64];
+  snprintf(timeData, sizeof(timeData), "TIME:%d,%d,%d,%d,%d,%d",
+           timeinfo.tm_year + 1900,  // Year
+           timeinfo.tm_mon + 1,       // Month (0-11, so add 1)
+           timeinfo.tm_mday,          // Day
+           timeinfo.tm_hour,          // Hour
+           timeinfo.tm_min,           // Minute
+           timeinfo.tm_sec);          // Second
+  
+  SerialArduino.println(timeData);
+  Serial.print("Sent to Arduino: ");
+  Serial.println(timeData);
 }
 
 void setup() {

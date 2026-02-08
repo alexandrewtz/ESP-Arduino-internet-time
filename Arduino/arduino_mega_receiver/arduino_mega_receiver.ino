@@ -4,11 +4,11 @@
  * This sketch receives time data from ESP32 via Serial.
  *
  * Mega 2560 wiring:
- *   ESP32 TX -> Mega RX1 (pin 19)
+ *   ESP32 GPIO 17 (TX) -> Mega RX1 (pin 19)
  *   ESP32 GND -> Mega GND
  *
  * Uno wiring (SoftwareSerial):
- *   ESP32 TX -> Uno D2 (RX)
+ *   ESP32 GPIO 17 (TX) -> Uno D2 (RX)
  *   ESP32 GND -> Uno GND
  *   Do NOT connect Uno TX (5V) to ESP32 RX unless level shifted.
  * 
@@ -23,9 +23,15 @@ const int RX_PIN = 2;
 const int TX_PIN = 3;
 const long DATA_BAUD = 9600;
 SoftwareSerial dataSerial(RX_PIN, TX_PIN);
-#else
+#elif defined(ARDUINO_AVR_MEGA2560)
 const long DATA_BAUD = 9600;
 #define dataSerial Serial1
+#else
+#include <SoftwareSerial.h>
+const int RX_PIN = 2;
+const int TX_PIN = 3;
+const long DATA_BAUD = 9600;
+SoftwareSerial dataSerial(RX_PIN, TX_PIN);
 #endif
 
 // Structure to store time data
@@ -43,10 +49,14 @@ TimeData currentTime = {0, 0, 0, 0, 0, 0, false};
 
 void setup() {
   // Serial for debugging (USB connection)
-  Serial.begin(DATA_BAUD);
+  Serial.begin(115200);
   
   // Data serial for receiving from ESP32
+  #if defined(ARDUINO_AVR_UNO) || !defined(ARDUINO_AVR_MEGA2560)
   dataSerial.begin(DATA_BAUD);
+  #else
+  Serial1.begin(DATA_BAUD);
+  #endif
   
   Serial.println("Arduino - Time Receiver");
   Serial.println("============================");

@@ -1,0 +1,13 @@
+stores:
+  # YAML files use 2-space indent by default
+  yaml:
+    indent: 2
+
+creation_rules:
+    # match .env
+  - path_regex: '\.env$'
+    # encrypt keys whose names contain WIFI/password/secret/token (case-insensitive)
+    encrypted_regex: '(?i)(wifi|password|secret|token)'
+    # public keys of recipients
+    age:
+      - age1c43gkwrxde5mh2pdkg6sepzmcm807csfrvwwjll6qt3gp0myee8syz7f2d
