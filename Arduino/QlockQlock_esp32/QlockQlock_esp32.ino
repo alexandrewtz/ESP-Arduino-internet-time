@@ -255,7 +255,6 @@ uint32_t generateInteger() {
     case 32:
     case 33:
     case 34:
-      hh = (hh + 1) % 24;
       time = time + 34603008;
       break;
     case 35:
