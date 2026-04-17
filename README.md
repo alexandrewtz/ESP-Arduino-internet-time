@@ -124,7 +124,7 @@ WIFI_SSID=your_network_name WIFI_PASSWORD=your_network_password pio run --target
 **To change timezone** (optional), edit the timezone string in `src/main.cpp`:
 
 ```cpp
-const char* timezone = "CET-1CEST,M3.5.0,M10.5.0/3";
+const char* timezone = "CET-1CEST,M3.5.0/2,M10.5.0/3";
 ```
 
 **Other timezone examples:**

@@ -3,6 +3,7 @@
         "/Users/wetzel/Documents/PlatformIO/Projects/ESP-Arduino-internet-time/.venv/bin/python": true,
         "platformio": true,
         "pkill": true,
-        "pio": true
+        "pio": true,
+        "git push": true
     }
 }

@@ -15,13 +15,13 @@ const char* password = WIFI_PASSWORD;
 // NTP Server settings
 const char* ntpServer = "pool.ntp.org";
 
-// CET/CEST timezone with automatic DST handling
-// CET-1CEST,M3.5.0,M10.5.0/3 means:
+// CET/CEST timezone with automatic DST handling (Europe/Zurich)
+// CET-1CEST,M3.5.0/2,M10.5.0/3 means:
 // - CET (UTC+1) in winter
 // - CEST (UTC+2) in summer
 // - DST starts: last Sunday in March at 2:00 AM
 // - DST ends: last Sunday in October at 3:00 AM
-const char* timezone = "CET-1CEST,M3.5.0,M10.5.0/3";
+const char* timezone = "CET-1CEST,M3.5.0/2,M10.5.0/3";
 
 // Time update interval (in milliseconds)
 const unsigned long TIME_UPDATE_INTERVAL = 1000; // Send time every second (debug mode)
@@ -110,13 +110,8 @@ void connectToWiFi() {
 }
 
 void initTime() {
-  // Configure NTP with timezone string for CET/CEST with automatic DST
-  // The timezone string is in POSIX format
-  configTime(0, 0, ntpServer, NULL, NULL);
-  
-  // Set timezone environment variable for proper localtime conversion
-  setenv("TZ", timezone, 1);
-  tzset();
+  // Configure NTP and timezone in one call (preferred on ESP32)
+  configTzTime(timezone, ntpServer, NULL, NULL);
   
   Serial.println("Waiting for time synchronization...");
   
